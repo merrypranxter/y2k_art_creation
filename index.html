@@ -1,1 +1,234 @@
-placeholder
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTRAL TRASH · Y2K Background Machine</title>
+<style>
+  :root {
+    --hot: #FF2D95; --mag: #FF00E5; --pur: #8A2BE2; --blu: #2E5BFF;
+    --cyn: #00F0FF; --grn: #A6FF00; --yel: #F6FF00; --bg: #0A0010;
+    --panel: #14002A; --line: #3D1160;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: #EDEDFF;
+    font-family: "Courier New", ui-monospace, monospace;
+    overflow: hidden;
+  }
+  #app { display: flex; height: 100vh; }
+
+  /* ---------- control panel ---------- */
+  #panel {
+    width: 340px; min-width: 340px; height: 100%;
+    overflow-y: auto; padding: 16px;
+    background: var(--panel);
+    border-right: 3px solid var(--line);
+  }
+  #panel::-webkit-scrollbar { width: 10px; }
+  #panel::-webkit-scrollbar-thumb { background: var(--pur); }
+  h1 {
+    font-size: 18px; letter-spacing: 2px; line-height: 1.3;
+    background: linear-gradient(90deg, var(--hot), var(--cyn), var(--grn), var(--yel));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 2px;
+  }
+  .sub { font-size: 10px; color: #9A7BC8; margin-bottom: 16px; letter-spacing: 1px; }
+  .sect {
+    border: 2px solid var(--line); margin-bottom: 14px; background: #0D0018;
+  }
+  .sect > header {
+    background: var(--line); color: #fff; font-size: 11px; font-weight: bold;
+    letter-spacing: 2px; padding: 5px 8px;
+  }
+  .sect > .body { padding: 10px; }
+  label.lbl { display: block; font-size: 10px; color: #BFA0E8; letter-spacing: 1px; margin: 8px 0 4px; }
+  label.lbl:first-child { margin-top: 0; }
+
+  .engine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .eng-btn {
+    font-family: inherit; font-size: 9px; letter-spacing: 0.5px; cursor: pointer;
+    background: #1A0533; color: #D8C6FF; border: 2px solid #4A2A80;
+    padding: 8px 4px; text-align: center; line-height: 1.35;
+  }
+  .eng-btn:hover { border-color: var(--cyn); }
+  .eng-btn.active {
+    background: var(--hot); color: #000; border-color: #fff; font-weight: bold;
+    box-shadow: 3px 3px 0 var(--cyn);
+  }
+  .eng-tag { font-size: 9px; color: #8A6BB8; margin-top: 6px; }
+
+  select, input[type=range] { width: 100%; }
+  select {
+    font-family: inherit; font-size: 11px; background: #1A0533; color: #fff;
+    border: 2px solid #4A2A80; padding: 5px;
+  }
+  input[type=range] { accent-color: var(--hot); }
+  .val { font-size: 10px; color: var(--cyn); float: right; }
+
+  #swatches { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .sw {
+    width: 30px; height: 30px; border: 2px solid #4A2A80; cursor: pointer;
+    padding: 0; position: relative;
+  }
+  .sw input[type=color] {
+    position: absolute; inset: -4px; width: 36px; height: 36px;
+    opacity: 0; cursor: pointer;
+  }
+  .sw.bg-sw { border-color: var(--yel); }
+  #addColor {
+    width: 30px; height: 30px; font-family: inherit; font-size: 16px;
+    background: #1A0533; color: var(--grn); border: 2px dashed #4A2A80; cursor: pointer;
+  }
+  .tiny { font-size: 9px; color: #8A6BB8; margin-top: 6px; line-height: 1.4; }
+
+  .row { display: flex; gap: 8px; }
+  .row > div { flex: 1; }
+
+  button.big {
+    width: 100%; font-family: inherit; font-weight: bold; letter-spacing: 2px;
+    font-size: 13px; padding: 12px; cursor: pointer; margin-top: 4px;
+    background: var(--grn); color: #000; border: 3px solid #fff;
+    box-shadow: 4px 4px 0 var(--mag);
+  }
+  button.big:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--mag); }
+  button.big:disabled { background: #555; box-shadow: none; cursor: wait; }
+  button.ghost {
+    width: 100%; font-family: inherit; font-size: 10px; letter-spacing: 1px;
+    padding: 7px; cursor: pointer; margin-top: 6px;
+    background: transparent; color: var(--cyn); border: 2px solid var(--cyn);
+  }
+  #prog { font-size: 10px; color: var(--yel); margin-top: 6px; min-height: 14px; }
+
+  /* ---------- stage ---------- */
+  #stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background:
+      repeating-conic-gradient(#0A0010 0% 25%, #0F0018 0% 50%) 0 0 / 24px 24px;
+    position: relative;
+  }
+  #frame-wrap {
+    border: 4px solid var(--line);
+    box-shadow: 0 0 40px #FF2D9544, 8px 8px 0 #000;
+    line-height: 0; background: #000;
+  }
+  #view { image-rendering: pixelated; }
+  #hud {
+    position: absolute; bottom: 12px; left: 350px; right: 12px; text-align: center;
+    font-size: 10px; color: #6A4A9A; letter-spacing: 1px; pointer-events: none;
+  }
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    #app { flex-direction: column; height: auto; }
+    #panel { width: 100%; min-width: 0; height: auto; border-right: none; }
+    #stage { min-height: 70vh; }
+    #hud { left: 12px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="panel">
+    <h1>✷ ASTRAL TRASH ✷<br>Y2K BACKGROUND MACHINE</h1>
+    <div class="sub">9:16 · 256-COLOR SOUL · HAND-CRANKED FRAMES</div>
+
+    <div class="sect">
+      <header>ENGINE</header>
+      <div class="body">
+        <div class="engine-grid" id="engines"></div>
+        <div class="eng-tag" id="engTag"></div>
+      </div>
+    </div>
+
+    <div class="sect">
+      <header>PALETTE</header>
+      <div class="body">
+        <label class="lbl">PRESET</label>
+        <select id="paletteSel"></select>
+        <label class="lbl">COLORS <span style="color:#5A3A80">(click to edit · yellow border = background)</span></label>
+        <div id="swatches"></div>
+        <label class="lbl" style="margin-top:10px">
+          <input type="checkbox" id="transparent" style="accent-color:var(--cyn)">
+          SEE-THRU BG (1-bit transparency)
+        </label>
+        <div class="tiny">see-thru mode makes pure black transparent — avoid pure #000000 as a motif color. exports as a transparent GIF sticker.</div>
+        <div class="tiny">tip: fewer colors = more authentic GIF energy</div>
+      </div>
+    </div>
+
+    <div class="sect">
+      <header>MOTION</header>
+      <div class="body">
+        <label class="lbl">SPEED <span class="val" id="fpsVal"></span></label>
+        <input type="range" id="fps" min="2" max="12" step="1" value="6">
+        <label class="lbl">DENSITY <span class="val" id="densVal"></span></label>
+        <input type="range" id="density" min="0.4" max="2" step="0.1" value="1">
+        <button class="ghost" id="shuffle">⟲ SHUFFLE LAYOUT (new seed)</button>
+      </div>
+    </div>
+
+    <div class="sect" id="textSect" style="display:none">
+      <header>BLINKIE / STAMP TEXT</header>
+      <div class="body">
+        <label class="lbl">SAYING</label>
+        <select id="sayingSel"></select>
+        <input type="text" id="customText" maxlength="80" placeholder="TYPE YOUR OWN…"
+          style="display:none; width:100%; margin-top:6px; font-family:inherit; font-size:11px; letter-spacing:1px; background:#1A0533; color:#fff; border:2px solid #4A2A80; padding:6px; text-transform:uppercase">
+        <div class="tiny">stamps wrap up to 3 lines, then auto-scroll. blinkies wave when short, scroll when long. shuffle the layout to re-roll the stamp icon.</div>
+      </div>
+    </div>
+
+    <div class="sect">
+      <header>EXPORT GIF</header>
+      <div class="body">
+        <div class="row">
+          <div>
+            <label class="lbl">SIZE</label>
+            <select id="expScale">
+              <option value="2">360×640</option>
+              <option value="3" selected>540×960</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">LOOP FRAMES</label>
+            <select id="expFrames">
+              <option value="8">8</option>
+              <option value="12">12</option>
+              <option value="16" selected>16</option>
+              <option value="24">24</option>
+            </select>
+          </div>
+        </div>
+        <button class="big" id="export">☆ EXPORT GIF ☆</button>
+        <div id="prog"></div>
+        <div id="result" style="display:none">
+          <img id="resultImg" alt="exported gif"
+            style="display:block; width:100%; margin-top:8px; border:2px solid #4A2A80; image-rendering:pixelated; background:repeating-conic-gradient(#1A1030 0% 25%, #241544 0% 50%) 0 0/12px 12px">
+          <div class="tiny" style="color:var(--yel)">📱 ON PHONE: long-press the gif above → “Save Image” / “Add to Photos”. that’s the move.</div>
+          <div class="row" style="margin-top:6px">
+            <a id="dlLink" style="flex:1; text-align:center; font-size:10px; letter-spacing:1px; padding:7px 0; color:var(--grn); border:2px solid var(--grn); text-decoration:none">↓ DOWNLOAD</a>
+            <a id="openLink" target="_blank" rel="noopener" style="flex:1; text-align:center; font-size:10px; letter-spacing:1px; padding:7px 0; color:var(--cyn); border:2px solid var(--cyn); text-decoration:none">↗ OPEN IN TAB</a>
+          </div>
+        </div>
+        <div class="tiny">exports loop seamlessly — drop them into TikTok effects, sticker makers, wherever.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="frame-wrap"><canvas id="view" width="540" height="960"></canvas></div>
+    <div id="hud">180×320 INTERNAL · ×3 NEAREST-NEIGHBOR · 0 ANTI-ALIASING · CHECKERBOARD = SEE-THRU · ∞ VIBES</div>
+  </div>
+</div>
+
+<script src="vendor/gif.worker.b64.js"></script>
+<script src="vendor/gif.js"></script>
+<script src="sprites.js"></script>
+<script src="text.js"></script>
+<script src="palettes.js"></script>
+<script src="engines.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
