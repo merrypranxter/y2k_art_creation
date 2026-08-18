@@ -218,7 +218,7 @@ APP_OPTS.text = sayingSel.value;
 
 /* ---------- GIF export ---------- */
 const prog = document.getElementById("prog");
-document.getElementById("export").onclick = () => {
+document.getElementById("export").onclick = async () => {
   const scale = +document.getElementById("expScale").value;
   const F = +document.getElementById("expFrames").value;
   const W = IW * scale, H = IH * scale;
@@ -230,14 +230,18 @@ document.getElementById("export").onclick = () => {
   const ectx = ecv.getContext("2d");
   ectx.imageSmoothingEnabled = false;
 
-  // workers from file:// are blocked in some browsers — use an inlined
-  // blob worker there so double-clicking index.html still exports fine
+  // web workers can't load a same-dir script when the page is opened via
+  // file:// — so the worker ships gzipped+base64'd inside the page and we
+  // spawn it from a blob URL. works over http(s) too, so prefer it always.
   let workerScript = "vendor/gif.worker.js";
-  if (location.protocol === "file:" && typeof GIF_WORKER_B64 !== "undefined") {
+  if (typeof GIF_WORKER_B64 !== "undefined" && typeof DecompressionStream !== "undefined") {
     const bin = atob(GIF_WORKER_B64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    workerScript = URL.createObjectURL(new Blob([bytes], { type: "application/javascript" }));
+    const gz = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) gz[i] = bin.charCodeAt(i);
+    const plain = await new Response(
+      new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))
+    ).arrayBuffer();
+    workerScript = URL.createObjectURL(new Blob([plain], { type: "application/javascript" }));
   }
   const gif = new GIF({
     workers: 2,
