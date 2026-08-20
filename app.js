@@ -24,6 +24,8 @@ const state = {
   frame: 0,
   engineState: null,
   transparent: false,
+  layout: "tall",    // "tall" 9:16 · "sq" 1:1 (engines with fixed dims ignore this)
+  textScale: 1,      // 1..4 → S/M/L/XL
 };
 
 /* ---------- transparency (1-bit, GIF-authentic) ---------- */
@@ -50,7 +52,7 @@ const APP_OPTS = { text: SAYINGS[0] };
 /* ---------- format switching (backgrounds vs blinkies/stamps) ---------- */
 function applyFormat() {
   const eng = ENGINES[state.engineIdx];
-  const dims = eng.dims || [180, 320];
+  const dims = eng.dims || (state.layout === "sq" ? [180, 180] : [180, 320]);
   IW = dims[0]; IH = dims[1];
   icv.width = IW; icv.height = IH;
   ictx.imageSmoothingEnabled = false;
@@ -70,6 +72,10 @@ function applyFormat() {
   sel.value = [...sel.options].some(o => o.value === cur) ? cur : "3";
   // text controls only for text engines
   document.getElementById("textSect").style.display = eng.isText ? "" : "none";
+  // layout picker only matters for engines without a fixed size
+  const lay = document.getElementById("layoutSel");
+  lay.disabled = !!eng.dims;
+  lay.title = eng.dims ? "this engine has a fixed size — layout applies to full-frame backgrounds" : "";
   document.getElementById("hud").textContent =
     `${IW}×${IH} INTERNAL · ×${scale} NEAREST-NEIGHBOR · 0 ANTI-ALIASING · CHECKERBOARD = SEE-THRU · ∞ VIBES`;
 }
@@ -81,6 +87,8 @@ function reinitEngine() {
   state.frame = 0;
 }
 function renderFrame(frame, F) {
+  // big-type control only touches text engines — furniture text stays put
+  TEXT_SCALE = ENGINES[state.engineIdx].isText ? state.textScale : 1;
   ENGINES[state.engineIdx].draw(ictx, state.engineState, frame, F, effectivePalette());
 }
 function blitPreview() {
@@ -179,6 +187,14 @@ function renderSwatches() {
 }
 renderSwatches();
 
+/* ---------- UI: canvas layout ---------- */
+const layoutSel = document.getElementById("layoutSel");
+layoutSel.onchange = () => {
+  state.layout = layoutSel.value;
+  applyFormat();
+  reinitEngine();
+};
+
 /* ---------- UI: motion ---------- */
 const fpsEl = document.getElementById("fps"), densEl = document.getElementById("density");
 const updLabels = () => {
@@ -215,6 +231,22 @@ sayingSel.onchange = () => {
 };
 customInp.oninput = () => { APP_OPTS.text = customInp.value; reinitEngine(); };
 APP_OPTS.text = sayingSel.value;
+
+/* ---------- UI: text size (S/M/L/XL) ---------- */
+const TS_NAMES = ["S", "M", "L", "XL"];
+function updTsLabel() {
+  document.getElementById("tsLabel").textContent =
+    TS_NAMES[state.textScale - 1] + " · ×" + state.textScale;
+}
+document.getElementById("tsMinus").onclick = () => {
+  state.textScale = Math.max(1, state.textScale - 1);
+  updTsLabel(); reinitEngine();
+};
+document.getElementById("tsPlus").onclick = () => {
+  state.textScale = Math.min(4, state.textScale + 1);
+  updTsLabel(); reinitEngine();
+};
+updTsLabel();
 
 /* ---------- GIF export ---------- */
 const prog = document.getElementById("prog");
@@ -286,8 +318,12 @@ document.getElementById("export").onclick = async () => {
 };
 
 /* ---------- go ---------- */
-// deep-link: #engine=N selects engine N (0..7), #pal=N palette, #frame=N freeze frame
+// deep-link: #engine=N selects engine N, #pal=N palette, #frame=N freeze frame,
+// #layout=sq|tall, #tsize=1..4 — works in the query string too (shareable links)
 const hash = new URLSearchParams(location.hash.slice(1));
+new URLSearchParams(location.search.slice(1)).forEach((v, k) => {
+  if (k !== "v" && !hash.has(k)) hash.set(k, v);
+});
 if (hash.has("pal")) {
   palSel.value = hash.get("pal");
   state.palette = JSON.parse(JSON.stringify(PALETTES[+palSel.value] || 0));
@@ -298,6 +334,14 @@ if (hash.has("engine")) {
   state.engineIdx = i;
   document.querySelectorAll(".eng-btn").forEach((x, j) => x.classList.toggle("active", j === i));
   document.getElementById("engTag").textContent = "» " + ENGINES[i].tag;
+}
+if (hash.has("layout")) {
+  state.layout = hash.get("layout") === "sq" ? "sq" : "tall";
+  layoutSel.value = state.layout;
+}
+if (hash.has("tsize")) {
+  state.textScale = Math.min(4, Math.max(1, +hash.get("tsize") || 1));
+  updTsLabel();
 }
 applyFormat();
 if (hash.has("say")) {

@@ -143,6 +143,17 @@
     </div>
 
     <div class="sect">
+      <header>CANVAS</header>
+      <div class="body">
+        <select id="layoutSel">
+          <option value="tall" selected>9:16 · TALL (tiktok/reels)</option>
+          <option value="sq">1:1 · SQUARE (posts & whatever)</option>
+        </select>
+        <div class="tiny">applies to full-frame backgrounds — blinkies, stamps & stickers keep their canonical sizes.</div>
+      </div>
+    </div>
+
+    <div class="sect">
       <header>PALETTE</header>
       <div class="body">
         <label class="lbl">PRESET</label>
@@ -174,8 +185,15 @@
       <div class="body">
         <label class="lbl">SAYING</label>
         <select id="sayingSel"></select>
-        <input type="text" id="customText" maxlength="80" placeholder="TYPE YOUR OWN…"
+        <input type="text" id="customText" maxlength="80" placeholder="TYPE YOUR OWN… TRY 💩👽🔥🛸💜🖕 #@%"
           style="display:none; width:100%; margin-top:6px; font-family:inherit; font-size:11px; letter-spacing:1px; background:#1A0533; color:#fff; border:2px solid #4A2A80; padding:6px; text-transform:uppercase">
+        <label class="lbl" style="margin-top:10px">TEXT SIZE</label>
+        <div class="row" style="align-items:stretch">
+          <button class="ghost" id="tsMinus" style="margin-top:0; font-size:14px; padding:4px 0">−</button>
+          <div style="flex:1; text-align:center; font-size:12px; letter-spacing:2px; color:var(--yel); border:2px solid #4A2A80; padding:6px 0" id="tsLabel">S · ×1</div>
+          <button class="ghost" id="tsPlus" style="margin-top:0; font-size:14px; padding:4px 0">+</button>
+        </div>
+        <div class="tiny">S → M → L → XL. bigger type eats more space — short sayings stay put, long ones auto-scroll. symbols & emoji work in custom text: , ! ? " ~ # + * % { } $ & @ 💩 👽 🎶 🎤 💋 🛸 🫠 🔥 🖕 💜 (hearts take the palette color).</div>
         <div class="tiny">stamps wrap up to 3 lines, then auto-scroll. blinkies wave when short, scroll when long. shuffle the layout to re-roll the stamp icon.</div>
       </div>
     </div>
@@ -226,14 +244,14 @@
 <script src="vendor/gif.worker.b64.js"></script>
 <script src="vendor/gif.js"></script>
 <script src="sprites.js"></script>
-<script src="text.js"></script>
+<script src="text.js?v=2"></script>
 <script src="palettes.js"></script>
-<script src="engines.js"></script>
-<script src="engines2.js"></script>
-<script src="engines3.js?v=7"></script>
+<script src="engines.js?v=2"></script>
+<script src="engines2.js?v=2"></script>
+<script src="engines3.js?v=8"></script>
 <script src="engines4.js?v=1"></script>
 <script src="engines5.js?v=1"></script>
 <script src="engines6.js?v=1"></script>
-<script src="app.js"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
