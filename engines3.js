@@ -406,20 +406,22 @@ const blinkieGlitch = {
     else tx = 4 + innerW - Math.floor((frame / F) * (tw + innerW));
     // row-sliced text with tears + occasional rgb split
     const split = (frame >> 1) % 3 === 0;
+    const ty = Math.round((H - GLYPH_H * TEXT_SCALE) / 2);
     const drawPass = (xoff, colorFor) => {
+      const chars = visibleChars(text);
       let cx = tx + xoff;
-      for (let i = 0; i < text.length; i++) {
-        const g = glyphOf(text[i]);
+      for (let i = 0; i < chars.length; i++) {
+        const g = glyphOf(chars[i]);
         for (let r = 0; r < GLYPH_H; r++) {
           const tear = hash2(st.salt + r * 7, frame >> 1) < 0.12
             ? (hash2(r, frame) < 0.5 ? -2 : 2) : 0;
           for (let c = 0; c < g[r].length; c++)
             if (g[r][c] === "X") {
               ctx.fillStyle = colorFor(i);
-              ctx.fillRect(cx + c + tear, 8 + r, 1, 1);
+              ctx.fillRect(cx + c * TEXT_SCALE + tear, ty + r * TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
             }
         }
-        cx += g[0].length + GLYPH_SP;
+        cx += (g[0].length + GLYPH_SP) * TEXT_SCALE;
       }
     };
     if (split) {
@@ -465,10 +467,11 @@ const blinkieChrome = {
       return pal.main[(shift + i + 3) % n];             // dark base
     };
     const tw = textWidth(text), innerW = W - 8;
-    if (tw <= innerW) drawText(ctx, text, Math.round((W - tw) / 2), 8, chromeFor);
+    const ty = Math.round((H - GLYPH_H * TEXT_SCALE) / 2);
+    if (tw <= innerW) drawText(ctx, text, Math.round((W - tw) / 2), ty, chromeFor);
     else {
       const off = Math.floor((frame / F) * (tw + innerW));
-      drawText(ctx, text, 4 + innerW - off, 8, chromeFor);
+      drawText(ctx, text, 4 + innerW - off, ty, chromeFor);
     }
   },
 };
@@ -511,23 +514,23 @@ const stampPostage = {
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(12, 10 + bob, 1, 1);
     }
-    // tiny Y2K postmark
-    drawText(ctx, "Y2K", W - 18, 7, pal.main[(st.c + 3) % n]);
+    // tiny Y2K postmark (fixed size — furniture text doesn't scale)
+    drawText(ctx, "Y2K", W - 18, 7, pal.main[(st.c + 3) % n], 1);
     drawSpriteC(ctx, SPRITES.star_tiny, W - 10, H - 9, (frame % 2) ? "#FFFFFF" : pal.main[(st.c + 3) % n]);
     // caption zone right of the icon
     const tx = 30, maxW = W - tx - 8;
     const lines = wrapText(text, maxW, 2);
     if (lines) {
-      const totalH = lines.length * (GLYPH_H + 1) - 1;
+      const totalH = lines.length * (GLYPH_H + 1) * TEXT_SCALE - 1;
       let ty = Math.round((H - totalH) / 2) + 2;
       for (const line of lines) {
         drawTextOutlined(ctx, line, tx, ty, (i) => pal.main[(i + shift + st.c) % n], pal.bg[0]);
-        ty += GLYPH_H + 1;
+        ty += (GLYPH_H + 1) * TEXT_SCALE;
       }
     } else {
       const tw = textWidth(text);
       const off = Math.floor((frame / F) * (tw + maxW));
-      drawTextOutlined(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H) / 2) + 2,
+      drawTextOutlined(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H * TEXT_SCALE) / 2) + 2,
         (i) => pal.main[(i + shift + st.c) % n], pal.bg[0]);
     }
   },
@@ -569,10 +572,11 @@ const stampCensored = {
     for (let x = 2; x < W - 2; x += 3) { ctx.fillRect(x, 14, 2, 1); ctx.fillRect(x, 23, 2, 1); }
     // text on the bar
     const tw = textWidth(text), barW = W - 10;
-    if (tw <= barW) drawText(ctx, text, Math.round((W - tw) / 2), 17, "#FFFFFF");
+    const barY = Math.round(14 + (10 - GLYPH_H * TEXT_SCALE) / 2);
+    if (tw <= barW) drawText(ctx, text, Math.round((W - tw) / 2), barY, "#FFFFFF");
     else {
       const off = Math.floor(t * (tw + barW));
-      drawText(ctx, text, 5 + barW - off, 17, (i) => (i + shift) % 5 === 0 ? pal.main[(i + shift) % n] : "#FFFFFF");
+      drawText(ctx, text, 5 + barW - off, barY, (i) => (i + shift) % 5 === 0 ? pal.main[(i + shift) % n] : "#FFFFFF");
     }
     // stampede of tiny stars below
     for (let x = 4; x < W - 4; x += 7)
@@ -609,9 +613,9 @@ const stampEightBall = {
       const x = bx + Math.round(Math.cos(ang) * 12), y = by + Math.round(Math.sin(ang) * 12);
       if (x > 1 && x < W - 2 && y > 1 && y < H - 2) ctx.fillRect(x, y, 1, 1);
     }
-    // the window: white circle + 8
+    // the window: white circle + 8 (fixed size — furniture text)
     fillCirclePix(ctx, bx, by, 5, "#FFFFFF");
-    drawText(ctx, "8", bx - 1, by - 2, "#111111");
+    drawText(ctx, "8", bx - 1, by - 2, "#111111", 1);
     // gloss
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(bx - 7, by - 7, 2, 1);
@@ -623,16 +627,16 @@ const stampEightBall = {
     const tx = 31, maxW = W - tx - 4;
     const lines = wrapText(text, maxW, 3);
     if (lines) {
-      const totalH = lines.length * (GLYPH_H + 1) - 1;
+      const totalH = lines.length * (GLYPH_H + 1) * TEXT_SCALE - 1;
       let ty = Math.round((H - totalH) / 2);
       for (const line of lines) {
         drawText(ctx, line, tx, ty, (i) => pal.main[(i + shift + st.c) % n]);
-        ty += GLYPH_H + 1;
+        ty += (GLYPH_H + 1) * TEXT_SCALE;
       }
     } else {
       const tw = textWidth(text);
       const off = Math.floor(t * (tw + maxW));
-      drawText(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H) / 2),
+      drawText(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H * TEXT_SCALE) / 2),
         (i) => pal.main[(i + shift + st.c) % n]);
     }
   },
@@ -670,10 +674,11 @@ const blinkieVhs = {
     // text
     const tw = textWidth(text), innerW = W - 18;
     const tx0 = 14;
-    if (tw <= innerW) drawText(ctx, text, tx0 + Math.round((innerW - tw) / 2), 8, (i) => pal.main[(i + shift) % n]);
+    const ty = Math.round((H - GLYPH_H * TEXT_SCALE) / 2);
+    if (tw <= innerW) drawText(ctx, text, tx0 + Math.round((innerW - tw) / 2), ty, (i) => pal.main[(i + shift) % n]);
     else {
       const off = Math.floor((frame / F) * (tw + innerW));
-      drawText(ctx, text, tx0 + innerW - off, 8, (i) => pal.main[(i + shift) % n]);
+      drawText(ctx, text, tx0 + innerW - off, ty, (i) => pal.main[(i + shift) % n]);
     }
     // tracking band: a noisy bar rolling down the tape
     const bandY = Math.floor(t * (H + 8)) - 4;

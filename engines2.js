@@ -428,12 +428,13 @@ const blinkieGlitter = {
     };
     const tw = textWidth(text), innerW = W - 8;
     const base = Math.floor(frame / 2);
+    const ty = Math.round((H - GLYPH_H * TEXT_SCALE) / 2);
     if (tw <= innerW) {
-      drawText(ctx, text, Math.round((W - tw) / 2), 8, glitterFor(base));
+      drawText(ctx, text, Math.round((W - tw) / 2), ty, glitterFor(base));
     } else {
       const total = tw + innerW;
       const off = Math.floor((frame / F) * total);
-      drawText(ctx, text, 4 + innerW - off, 8, glitterFor(base));
+      drawText(ctx, text, 4 + innerW - off, ty, glitterFor(base));
     }
   },
 };
@@ -459,29 +460,32 @@ const blinkieBounce = {
     const tw = textWidth(text), innerW = W - 6;
     const t = frame / F;
     const shift = Math.floor(frame / 2);
+    const ty = Math.round((H - GLYPH_H * TEXT_SCALE) / 2);
     if (tw <= innerW) {
+      const chars = visibleChars(text);
       let cx = Math.round((W - tw) / 2);
-      for (let i = 0; i < text.length; i++) {
-        const g = glyphOf(text[i]);
+      for (let i = 0; i < chars.length; i++) {
+        const g = glyphOf(chars[i]);
         const hop = Math.round(3 * Math.abs(Math.sin(2 * Math.PI * (t * 2 + i * 0.09))));
         const col = pal.main[(i + shift) % n];
         for (let r = 0; r < GLYPH_H; r++)
           for (let c = 0; c < g[r].length; c++)
             if (g[r][c] === "X") {
               ctx.fillStyle = col;
-              ctx.fillRect(cx + c, 8 - hop + r, 1, 1);
+              ctx.fillRect(cx + c * TEXT_SCALE, ty - hop + r * TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
             }
         // squash shadow when the letter lands
         if (hop === 0) {
           ctx.fillStyle = pal.main[(i + shift + 2) % n];
-          for (let c = 0; c < g[0].length; c++) ctx.fillRect(cx + c, 14, 1, 1);
+          for (let c = 0; c < g[0].length; c++)
+            ctx.fillRect(cx + c * TEXT_SCALE, ty + GLYPH_H * TEXT_SCALE + 1, TEXT_SCALE, TEXT_SCALE);
         }
-        cx += g[0].length + GLYPH_SP;
+        cx += (g[0].length + GLYPH_SP) * TEXT_SCALE;
       }
     } else {
       const total = tw + innerW;
       const off = Math.floor(t * total);
-      drawText(ctx, text, 3 + innerW - off, 8, (i) => pal.main[(i + shift) % n]);
+      drawText(ctx, text, 3 + innerW - off, ty, (i) => pal.main[(i + shift) % n]);
     }
   },
 };
@@ -523,14 +527,14 @@ const stampHazard = {
     for (let y = 4; y < H - 4; y++) { ctx.fillRect(4, y, 1, 1); ctx.fillRect(W - 5, y, 1, 1); }
     // text, outlined, 2 lines max
     const lines = wrapText(text, W - 14, 2) || [text];
-    const totalH = lines.length * (GLYPH_H + 2) - 2;
+    const totalH = lines.length * (GLYPH_H + 2) * TEXT_SCALE - 2;
     let ty = Math.round((H - totalH) / 2);
     const shift = Math.floor(frame / 2);
     for (const line of lines) {
       const lw = textWidth(line);
       drawTextOutlined(ctx, line, Math.round((W - lw) / 2), ty,
         (i) => pal.main[(i + shift + st.hz) % n], pal.bg[0]);
-      ty += GLYPH_H + 2;
+      ty += (GLYPH_H + 2) * TEXT_SCALE;
     }
   },
 };
@@ -580,16 +584,16 @@ const stampCertified = {
     const lines = wrapText(text, maxW, 3);
     const shift = Math.floor(frame / 3);
     if (lines) {
-      const totalH = lines.length * (GLYPH_H + 1) - 1;
+      const totalH = lines.length * (GLYPH_H + 1) * TEXT_SCALE - 1;
       let ty = Math.round((H - totalH) / 2);
       for (const line of lines) {
         drawText(ctx, line, tx, ty, (i) => pal.main[(i + shift) % n]);
-        ty += GLYPH_H + 1;
+        ty += (GLYPH_H + 1) * TEXT_SCALE;
       }
     } else {
       const tw = textWidth(text);
       const off = Math.floor((frame / F) * (tw + maxW));
-      drawText(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H) / 2),
+      drawText(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H * TEXT_SCALE) / 2),
         (i) => pal.main[(i + shift) % n]);
     }
   },
@@ -637,11 +641,12 @@ const stampPolaroid = {
     // caption scrolling on the bottom strip
     const tw = textWidth(text), capW = W - 6;
     const shift = Math.floor(frame / 2);
+    const capY = H - 2 - GLYPH_H * TEXT_SCALE; // caption hugs the bottom strip
     if (tw <= capW) {
-      drawText(ctx, text, Math.round((W - tw) / 2), H - 6, (i) => pal.main[(i + shift) % n]);
+      drawText(ctx, text, Math.round((W - tw) / 2), capY, (i) => pal.main[(i + shift) % n]);
     } else {
       const off = Math.floor((frame / F) * (tw + capW));
-      drawText(ctx, text, 3 + capW - off, H - 6, (i) => pal.main[(i + shift) % n]);
+      drawText(ctx, text, 3 + capW - off, capY, (i) => pal.main[(i + shift) % n]);
     }
   },
 };

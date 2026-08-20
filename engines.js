@@ -849,7 +849,8 @@ const blinkieScroll = {
     const off = Math.floor((frame / F) * total);
     const baseX = 2 + innerW - off;
     const colorShift = Math.floor(frame / 2);
-    drawText(ctx, text, baseX, 8, (i) => pal.main[(i + colorShift) % n]);
+    drawText(ctx, text, baseX, Math.round((H - GLYPH_H * TEXT_SCALE) / 2),
+      (i) => pal.main[(i + colorShift) % n]);
     // end sparkles
     for (let s = 0; s < st.sparkN; s++) {
       const sx = 2 + ((s * 37 + frame * 3) % innerW);
@@ -883,11 +884,13 @@ const blinkieWave = {
     const tw = textWidth(text);
     const innerW = W - 6;
     const t = frame / F;
+    const ty = Math.round((H - GLYPH_H * TEXT_SCALE) / 2);
     if (tw <= innerW) {
       // wave: each letter bobs on a quantized sine
+      const chars = visibleChars(text);
       let cx = Math.round((W - tw) / 2);
-      for (let i = 0; i < text.length; i++) {
-        const g = glyphOf(text[i]);
+      for (let i = 0; i < chars.length; i++) {
+        const g = glyphOf(chars[i]);
         const bob = Math.round(1.5 * Math.sin(2 * Math.PI * (t * 2 + i * 0.12)));
         const col = pal.main[(i + Math.floor(frame / 2)) % n];
         let gx = cx;
@@ -895,15 +898,15 @@ const blinkieWave = {
           for (let c = 0; c < g[r].length; c++)
             if (g[r][c] === "X") {
               ctx.fillStyle = col;
-              ctx.fillRect(gx + c, 8 + bob + r, 1, 1);
+              ctx.fillRect(gx + c * TEXT_SCALE, ty + bob + r * TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
             }
-        cx += g[0].length + GLYPH_SP;
+        cx += (g[0].length + GLYPH_SP) * TEXT_SCALE;
       }
     } else {
       // too long — fall back to scroll
       const total = tw + innerW;
       const off = Math.floor(t * total);
-      drawText(ctx, text, 3 + innerW - off, 8, (i) => pal.main[(i + Math.floor(frame / 2)) % n]);
+      drawText(ctx, text, 3 + innerW - off, ty, (i) => pal.main[(i + Math.floor(frame / 2)) % n]);
     }
   },
 };
@@ -948,18 +951,18 @@ const stampIcon = {
     const lines = wrapText(text, maxW, 3);
     const colShift = Math.floor(frame / 3);
     if (lines) {
-      const totalH = lines.length * (GLYPH_H + 1) - 1;
+      const totalH = lines.length * (GLYPH_H + 1) * TEXT_SCALE - 1;
       let ty = Math.round((H - totalH) / 2);
       for (const line of lines) {
         drawText(ctx, line, tx, ty, (i) => pal.main[(i + colShift) % n]);
-        ty += GLYPH_H + 1;
+        ty += (GLYPH_H + 1) * TEXT_SCALE;
       }
     } else {
       // too much text — scroll one line through the text zone
       const tw = textWidth(text);
       const total = tw + maxW;
       const off = Math.floor((frame / F) * total);
-      drawText(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H) / 2),
+      drawText(ctx, text, tx + maxW - off, Math.round((H - GLYPH_H * TEXT_SCALE) / 2),
         (i) => pal.main[(i + colShift) % n]);
     }
   },
@@ -1003,14 +1006,14 @@ const stampVoid = {
     // outlined text, centered, up to 2 lines
     const maxW = W - 10;
     const lines = wrapText(text, maxW, 2) || [text];
-    const totalH = lines.length * (GLYPH_H + 2) - 2;
+    const totalH = lines.length * (GLYPH_H + 2) * TEXT_SCALE - 2;
     let ty = Math.round((H - totalH) / 2);
     const shift = Math.floor(frame / 2);
     for (const line of lines) {
       const lw = textWidth(line);
       const lx = Math.round((W - lw) / 2);
       drawTextOutlined(ctx, line, lx, ty, (i) => pal.main[(i + shift) % n], pal.bg[0]);
-      ty += GLYPH_H + 2;
+      ty += (GLYPH_H + 2) * TEXT_SCALE;
     }
   },
 };
